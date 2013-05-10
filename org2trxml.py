@@ -36,11 +36,14 @@ def parse_org(args):
                 if in_preamble:
                     raise Exception("Not allowed to have text prior to first bullet")
                 line = line.strip()
+                if depth == 4:
+                    cur_el.text += "\n" + line
+                    continue
                 if desc is None:
                     desc = et.SubElement(cur_el, "description")
                     desc.text = line
                 else:
-                    desc.text += " " + line
+                    desc.text += "\n" + line
                 continue
 
 
@@ -131,6 +134,7 @@ def emit_org(args, element, org, context={'depth':0}):
     elif element.tag == "step":
         # Step is same as case unless manual is set
         tag=None
+        context['depth']=5
         if element.get("manual") is not None:
             if element.get("manual") == "true":
                 if not context['manual_case']:
@@ -138,14 +142,23 @@ def emit_org(args, element, org, context={'depth':0}):
             else:
                 if context['manual_case']:
                     tag="AUTO"
-        if tag:
-            org.write("**** {:<50} :{}:\n".format(element.text or "", tag))
+        # handle multi-line step
+        lines = (element.text or "").splitlines()
+        if len(lines):
+            line1 = lines[0]
+            del lines[0]
         else:
-            org.write("*** %s\n" % (element.text or ""))
-        context['depth']=5
+            line1 = ""
+        if tag:
+            org.write("**** {:<50} :{}:\n".format(line1, tag))
+        else:
+            org.write("**** %s\n" % (line1))
+        # now remaining text - indented
+        space=" "* context['depth']
+        for line in lines:
+            org.write(space+line+"\n")
     elif element.tag == "description":
         org.write("%s%s\n" % (" "* context['depth'], (element.text or "")))
-        context['depth']=4
     else:
         print "Unknown element %s" % element
 
