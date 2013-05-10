@@ -115,7 +115,7 @@ def emit_org(args, element, org, context={'depth':0}):
     if not isinstance(element.tag, basestring):
         return
 
-    if element.tag == "{http://www.w3.org/2001/XMLSchema-instance}testdefinition":
+    if element.tag == "testdefinition":
         pass
     elif element.tag == "suite":
         org.write("* %s\n" % element.get("name"))
