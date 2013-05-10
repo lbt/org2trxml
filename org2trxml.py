@@ -108,12 +108,14 @@ def get_xml(args):
 # recursive org emitter
 def emit_org(args, element, org, context={'depth':0}):
 
-    if not isinstance(element.tag, basestring):
-        # assume it's a comment
+    if isinstance(element, et._Comment):
         org.write("# %s\n" % element.text)
         return
 
-    if element.tag == "testdefinition":
+    if not isinstance(element.tag, basestring):
+        return
+
+    if element.tag == "{http://www.w3.org/2001/XMLSchema-instance}testdefinition":
         pass
     elif element.tag == "suite":
         org.write("* %s\n" % element.get("name"))
@@ -129,7 +131,7 @@ def emit_org(args, element, org, context={'depth':0}):
         if context['manual_case']:
             org.write("*** %s\n" % element.get("name"))
         else:
-            org.write("*** {:<50} :AUTO:\n".format(element.get("name")))
+            org.write("*** {:<64} :AUTO:\n".format(element.get("name")))
         context['depth']=4
     elif element.tag == "step":
         # Step is same as case unless manual is set
@@ -150,7 +152,7 @@ def emit_org(args, element, org, context={'depth':0}):
         else:
             line1 = ""
         if tag:
-            org.write("**** {:<50} :{}:\n".format(line1, tag))
+            org.write("**** {:<64} :{}:\n".format(line1, tag))
         else:
             org.write("**** %s\n" % (line1))
         # now remaining text - indented
@@ -179,7 +181,6 @@ if args.to_xml:
     emit_xml(args, root)
 elif args.to_org:
     root = get_xml(args)
-    print root
     emit_org(args, root, sys.stdout)
 else:
     print "Must use either --to-xml or --to-org"
