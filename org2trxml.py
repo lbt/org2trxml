@@ -72,14 +72,17 @@ def parse_org(args):
             cur_depth = depth
 
             if depth == 1:
-                cur_el = et.SubElement(parent, "set", name=txt)
+                cur_el = et.SubElement(parent, "suite", name=txt)
 
             if depth == 2:
+                cur_el = et.SubElement(parent, "set", name=txt)
+
+            if depth == 3:
                 cur_el = et.SubElement(parent, "case", name=txt)
                 if not "AUTO" in tags:
                     cur_el.set("manual", "true")
 
-            if depth == 3:
+            if depth == 4:
                 cur_el = et.SubElement(parent, "step")
                 cur_el.text = txt
                 
@@ -109,19 +112,22 @@ def emit_org(args, element, org, context={'depth':0}):
 
     if element.tag == "testdefinition":
         pass
-    elif element.tag == "set":
+    elif element.tag == "suite":
         org.write("* %s\n" % element.get("name"))
         context['depth']=2
+    elif element.tag == "set":
+        org.write("** %s\n" % element.get("name"))
+        context['depth']=3
     elif element.tag == "case":
         if element.get("manual") != "true":
             context['manual_case']=False
         else:
             context['manual_case']=True
         if context['manual_case']:
-            org.write("** %s\n" % element.get("name"))
+            org.write("*** %s\n" % element.get("name"))
         else:
-            org.write("** {:<50} :AUTO:\n".format(element.get("name")))
-        context['depth']=3
+            org.write("*** {:<50} :AUTO:\n".format(element.get("name")))
+        context['depth']=4
     elif element.tag == "step":
         # Step is same as case unless manual is set
         tag=None
@@ -133,13 +139,13 @@ def emit_org(args, element, org, context={'depth':0}):
                 if context['manual_case']:
                     tag="AUTO"
         if tag:
-            org.write("*** {:<50} :{}:\n".format(element.text or "", tag))
+            org.write("**** {:<50} :{}:\n".format(element.text or "", tag))
         else:
             org.write("*** %s\n" % (element.text or ""))
-        context['depth']=4
+        context['depth']=5
     elif element.tag == "description":
         org.write("%s%s\n" % (" "* context['depth'], (element.text or "")))
-        context['depth']=3
+        context['depth']=4
     else:
         print "Unknown element %s" % element
 
